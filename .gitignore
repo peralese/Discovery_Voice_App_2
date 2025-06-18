@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# Vosk models or large binaries
+models/
+responses/
+interview_log.json
+
+# Virtual environments
+.venv/
+env/
+
