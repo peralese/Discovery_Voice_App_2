@@ -1,6 +1,8 @@
 # context_manager.py
 # Manages discovery schema state during the dynamic interview
 
+# modules/context_manager.py
+
 discovery_schema = {
     "interviewee_name": None,
     "application_name": None,
@@ -17,17 +19,31 @@ discovery_schema = {
     "known_issues": None
 }
 
-def init_context():
-    # Returns a fresh copy of the discovery schema
-    return discovery_schema.copy()
+import json
 
-def is_complete(context):
-    # Returns True if all values are filled
-    return all(value is not None and value.strip() != "" for value in context.values())
+class DiscoveryContext:
+    def __init__(self):
+        self.context = discovery_schema.copy()
 
-def get_missing_fields(context):
-    return [field for field, value in context.items() if value is None or value.strip() == ""]
+    def get_context(self):
+        return self.context
 
-def update_context(context, field, value):
-    if field in context:
-        context[field] = value.strip()
+    def is_complete(self):
+        return all(value is not None and value.strip() != "" for value in self.context.values())
+
+    def get_missing_fields(self):
+        return [field for field, value in self.context.items() if value is None or value.strip() == ""]
+
+    def update_context(self, user_response):
+        # Naive mapping: fills the next unanswered field with the response
+        for field in self.context:
+            if self.context[field] is None:
+                self.context[field] = user_response.strip()
+                break
+
+    def to_json(self):
+        return json.dumps(self.context, indent=2)
+
+    def save_to_file(self, filename):
+        with open(filename, "w") as f:
+            json.dump(self.context, f, indent=2)

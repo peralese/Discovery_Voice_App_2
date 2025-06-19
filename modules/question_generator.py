@@ -1,14 +1,19 @@
-import openai
 import os
 from dotenv import load_dotenv
 import json
+from openai import OpenAI
 
+# Load environment variables
 load_dotenv()
-# Make sure to set your OpenAI API key in your environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize OpenAI client
+client = OpenAI()
+
+# Optional explicit API key check (redundant if client is configured through env var)
+if not os.getenv("OPENAI_API_KEY"):
+    raise ValueError("OpenAI API key not found. Did you forget to set it in your .env file?")
 
 def get_next_question(context, last_response):
-    # Extract unanswered fields
     unanswered = [k for k, v in context.items() if v is None]
     answered = {k: v for k, v in context.items() if v is not None}
 
@@ -30,8 +35,8 @@ Here are the missing fields we still need:
 Please generate one clear, professional question that will help elicit one of the remaining fields. Return only the question itself.
 """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful discovery agent conducting cloud architecture interviews."},
             {"role": "user", "content": prompt}
@@ -40,4 +45,5 @@ Please generate one clear, professional question that will help elicit one of th
         max_tokens=100
     )
 
-    return response.choices[0].message['content'].strip()
+    return response.choices[0].message.content.strip()
+
