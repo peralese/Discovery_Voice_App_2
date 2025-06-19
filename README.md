@@ -21,7 +21,9 @@ Discovery_Voice_App_2/
 ├── modules/
 │   ├── context_manager.py
 │   ├── question_generator.py  # (in progress)
-│   └── storage.py # (coming soon)
+│   ├── storage.py # Saves responses with timestamp (in progress)
+│   ├── transcribe.py # Microphone input + transcription + audio saving (in progress)
+│   └── tts.py # Text-to-Speech playback (in progress)
 ├── responses/                 # saved audio responses (coming soon)
 ├── models/                    # Vosk model (e.g., vosk-model-en-us-0.42-gigaspeech) (coming soon)
 ├── questions.json             # base schema for interview (coming soon)
@@ -93,11 +95,11 @@ The bot will:
 
 ## 📦 Roadmap
 
-- [ ] Voice question + voice response capture
-- [ ] Save transcriptions and audio
+- [x] Voice question + voice response capture
+- [x] Save transcriptions and audio
 - [x] Structured context manager
-- [ ] Dynamic question generation (GPT-based)
-- [ ] Web interface (streamlit or flask)
+- [x] Dynamic question generation (GPT-based)
+- [x] Web interface (streamlit or flask)
 
 ---
 
