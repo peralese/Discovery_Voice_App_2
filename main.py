@@ -10,6 +10,19 @@ def run_dynamic_interview():
     context = DiscoveryContext()
     last_response = ""
 
+        # ✅ Hardcode the first field: interviewee_name
+    if context.get_context()["interviewee_name"] is None:
+        first_question = "What is your name?"
+        print(f"\n🤖 Question: {first_question}")
+        speak_text(first_question)
+
+        user_text, audio_path = transcribe_audio_live()
+        print(f"📝 Transcribed: {user_text}")
+
+        context.update_context(user_text)
+        save_response(first_question, user_text, audio_path)
+        last_response = user_text
+
     while not context.is_complete():
         # Ask GPT for next question
         question = get_next_question(context.get_context(), last_response)
@@ -26,12 +39,6 @@ def run_dynamic_interview():
         print(f"📝 Transcribed: {user_text}")
 
         # Update context
-        context.update_context(user_text)
-
-        # Save current response (optional logging)
-        save_response(question, user_text)
-        last_response = user_text
-        time.sleep(1)
 
     # Final export
     print("\n📄 Final structured context:")

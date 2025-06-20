@@ -13,7 +13,7 @@ CHUNK = 4000
 CHANNELS = 1
 FORMAT = pyaudio.paInt16
 MODEL_PATH = "models/vosk-model-en-us-0.42-gigaspeech"
-SILENCE_THRESHOLD = 4  # seconds of silence to stop recording
+SILENCE_THRESHOLD = 6  # seconds of silence to stop recording
 
 # Ensure audio directory exists
 os.makedirs(AUDIO_DIR, exist_ok=True)
