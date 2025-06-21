@@ -24,6 +24,7 @@ Discovery_Voice_App_2/
 │   ├── storage.py # Saves responses with timestamp (in progress)
 │   ├── transcribe.py # Microphone input + transcription + audio saving (in progress)
 │   └── tts.py # Text-to-Speech playback (in progress)
+│   └── transcribe_all_responses.py # Text-to-Speech conversion called at end (in progress)
 ├── responses/                 # saved audio responses (coming soon)
 ├── models/                    # Vosk model (e.g., vosk-model-en-us-0.42-gigaspeech) (coming soon)
 ├── questions.json             # base schema for interview (coming soon)

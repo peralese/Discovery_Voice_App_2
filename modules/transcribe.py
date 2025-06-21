@@ -13,7 +13,7 @@ CHUNK = 4000
 CHANNELS = 1
 FORMAT = pyaudio.paInt16
 MODEL_PATH = "models/vosk-model-en-us-0.42-gigaspeech"
-SILENCE_THRESHOLD = 6  # seconds of silence to stop recording
+SILENCE_THRESHOLD = 4  # seconds of silence to stop recording
 
 # Ensure audio directory exists
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -81,3 +81,66 @@ def transcribe_audio_live():
     # If full result is blank, use last partial fallback
     final_text = text.strip() or partial_text.strip()
     return final_text, audio_filename
+
+def record_audio_only():
+    audio_filename = os.path.join(AUDIO_DIR, f"response_{uuid.uuid4().hex}.wav")
+
+    p = pyaudio.PyAudio()
+    stream = p.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+
+    print(f"🎙️ Recording... Speak now. Silence for {SILENCE_THRESHOLD}s will stop recording.")
+    frames = []
+    start_time = time.time()
+    last_spoken_time = start_time
+
+    try:
+        while True:
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            frames.append(data)
+
+            # Optional: Short voice detection without Vosk
+            if any(abs(x) > 500 for x in memoryview(data).cast('h')):
+                last_spoken_time = time.time()
+
+            if time.time() - last_spoken_time > SILENCE_THRESHOLD:
+                print("🤫 Silence detected. Ending recording.")
+                break
+
+    except KeyboardInterrupt:
+        print("⏹️ Recording interrupted by user.")
+
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        wf = wave.open(audio_filename, 'wb')
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+
+        print(f"💾 Audio saved: {audio_filename}")
+
+    return audio_filename
+
+def transcribe_file(path):
+    recognizer = KaldiRecognizer(model, RATE)
+    wf = wave.open(path, "rb")
+    response_text = ""
+
+    while True:
+        data = wf.readframes(CHUNK)
+        if len(data) == 0:
+            break
+        if recognizer.AcceptWaveform(data):
+            result = json.loads(recognizer.Result())
+            response_text += result.get("text", "") + " "
+
+    wf.close()
+    return response_text.strip()
