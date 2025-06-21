@@ -25,13 +25,12 @@ Discovery_Voice_App_2/
 │   ├── transcribe.py # Microphone input + transcription + audio saving (in progress)
 │   └── tts.py # Text-to-Speech playback (in progress)
 │   └── transcribe_all_responses.py # Text-to-Speech conversion called at end (in progress)
-├── responses/                 # saved audio responses (coming soon)
-├── models/                    # Vosk model (e.g., vosk-model-en-us-0.42-gigaspeech) (coming soon)
-├── questions.json             # base schema for interview (coming soon)
-├── interview_log.json         # stored structured results (coming soon)
+├── responses/                 # saved audio responses (excluded from git)
+├── models/                    # Vosk model (e.g., vosk-model-en-us-0.42-gigaspeech) (excluded from git)
+├── interview_log.json         # stored structured results (excluded from git)
 ├── .env                       # OpenAI API key (excluded from git)
 ├── requirements.txt           (coming soon) 
-└── main.py                    # main driver script (coming soon)
+└── main.py                    # main driver script (in progress)
 ```
 
 ---
