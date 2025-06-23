@@ -7,10 +7,11 @@ This project is a proof of concept (PoC) for a **voice-enabled AI interview assi
 ## 🔧 Features
 
 - Ask questions via **text-to-speech (TTS)** using `pyttsx3`
-- Record spoken answers via `pyaudio` and transcribe them with `Vosk`
-- Store both **transcriptions** and **audio files** per question
-- Generate questions dynamically (coming soon via GPT-4 integration)
-- Store structured responses to a `interview_log.json` file
+- Record spoken answers via `pyaudio`
+- Transcribe speech with **OpenAI Whisper API**
+- Store both **transcriptions** and **.wav audio files** per question
+- Generate questions dynamically using **GPT-3.5 / GPT-4**
+- Save structured responses to `interview_log.json` and `discovery_output.json`
 
 ---
 
@@ -26,7 +27,6 @@ Discovery_Voice_App_2/
 │   └── tts.py # Text-to-Speech playback (in progress)
 │   └── transcribe_all_responses.py # Text-to-Speech conversion called at end (in progress)
 ├── responses/                 # saved audio responses (excluded from git)
-├── models/                    # Vosk model (e.g., vosk-model-en-us-0.42-gigaspeech) (excluded from git)
 ├── interview_log.json         # stored structured results (excluded from git)
 ├── .env                       # OpenAI API key (excluded from git)
 ├── requirements.txt           (coming soon) 
@@ -95,12 +95,13 @@ The bot will:
 
 ## 📦 Roadmap
 
-- [x] Voice question + voice response capture
-- [x] Save transcriptions and audio
-- [x] Structured context manager
-- [x] Dynamic question generation (GPT-based)
-- [x] Web interface (streamlit or flask)
-
+- [x] Voice-based Q&A loop
+- [x] Whisper-based transcription
+- [x] GPT-driven question generation
+- [x] Exit intent recognition
+- [x] Deferred transcription mode (optional)
+- [ ] Web interface (Flask or Streamlit)
+- [ ] CSV/JSON export
 ---
 
 ## 📄 License

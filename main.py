@@ -4,9 +4,8 @@ import datetime
 from modules.context_manager import DiscoveryContext
 from modules.question_generator import get_next_question
 from modules.tts import speak_text
-from modules.transcribe import record_audio_only  # <- new function you'll add
-from modules.storage import save_response   # <- new function you'll add
-
+from modules.transcribe import record_audio_only, transcribe_file_whisper
+from modules.storage import save_response
 
 def run_dynamic_interview():
     context = DiscoveryContext()
@@ -18,12 +17,24 @@ def run_dynamic_interview():
         print(f"\n🤖 Question: {first_question}")
         speak_text(first_question)
 
-        # audio_path = record_audio_only()
-        # save_audio_metadata(first_question, audio_path)
         audio_path = record_audio_only()
-        save_response(first_question, "", audio_path)
-        last_response = ""
-        context.update_context("")  # Empty for now
+        user_text = transcribe_file_whisper(audio_path)
+
+        # Exit condition
+        # if user_text.lower() in ["exit", "quit", "stop", "cancel"]:
+        #     print("👋 Interview stopped by user.")
+        #     return
+        exit_keywords = ["exit", "quit", "stop", "cancel"]
+        if any(keyword in user_text.lower() for keyword in exit_keywords):
+            print("👋 Detected exit intent in response.")
+            save_response("Interview exited by user", user_text, audio_path)
+            return
+
+
+
+        save_response(first_question, user_text, audio_path)
+        context.update_context(user_text)
+        last_response = user_text
 
     while not context.is_complete():
         question = get_next_question(context.get_context(), last_response)
@@ -36,15 +47,25 @@ def run_dynamic_interview():
 
         print("🎙️ Listening for your answer...")
         audio_path = record_audio_only()
-        save_response(question, "", audio_path)
+        user_text = transcribe_file_whisper(audio_path)
 
-        context.update_context("")  # Empty placeholder
-        last_response = ""
+        # if user_text.lower() in ["exit", "quit", "stop", "cancel"]:
+        #     print("👋 Interview stopped by user.")
+        #     break
+        if any(keyword in user_text.lower() for keyword in exit_keywords):
+            print("👋 Detected exit intent in response.")
+            save_response("Interview exited by user", user_text, audio_path)
+            break
+
+        save_response(question, user_text, audio_path)
+        context.update_context(user_text)
+        last_response = user_text
         time.sleep(1)
 
-    print("\n🎧 Recording complete. Transcription will be run separately.")
+    print("\n📄 Final structured context:")
+    print(context.to_json())
     context.save_to_file("discovery_output.json")
-
 
 if __name__ == "__main__":
     run_dynamic_interview()
+
