@@ -7,11 +7,12 @@ This project is a proof of concept (PoC) for a **voice-enabled AI interview assi
 ## 🔧 Features
 
 - Ask questions via **text-to-speech (TTS)** using `pyttsx3`
-- Record spoken answers via `pyaudio`
-- Transcribe speech with **OpenAI Whisper API**
+- Voice input with silence detection using `pyaudio`
+- Transcribe speech with **OpenAI Whisper API** (replaces Vsok)
 - Store both **transcriptions** and **.wav audio files** per question
 - Generate questions dynamically using **GPT-3.5 / GPT-4**
 - Save structured responses to `interview_log.json` and `discovery_output.json`
+- Follow-up questions when clarification is needed
 
 ---
 
@@ -101,7 +102,10 @@ The bot will:
 - [x] Exit intent recognition
 - [x] Deferred transcription mode (optional)
 - [ ] Web interface (Flask or Streamlit)
-- [ ] CSV/JSON export
+- [ ] Export to CSV / cleaned JSON summary
+- [ ] Introductory overview (spoken)
+- [ ] Pause/resume support
+- [ ] End-of-interview summary report
 ---
 
 ## 📄 License
