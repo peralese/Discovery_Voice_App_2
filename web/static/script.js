@@ -1,58 +1,107 @@
+const recordBtn = document.getElementById("recordBtn");
+const questionEl = document.getElementById("question");
+const transcriptEl = document.getElementById("transcript");
+
 let mediaRecorder;
 let audioChunks = [];
 
-function startInterview() {
-  fetch("/ask", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ last_response: "" })
-  })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("question-box").innerText = data.question;
-  });
+// Load first question on page load
+window.onload = () => {
+    askNextQuestion("");  // triggers "What is your name?" if not asked yet
+};
+
+// 🎤 Start recording
+recordBtn.addEventListener("click", async () => {
+    if (!navigator.mediaDevices) {
+        alert("Your browser does not support audio recording.");
+        return;
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+
+    audioChunks = [];
+    mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+            audioChunks.push(event.data);
+        }
+    };
+
+    mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append("audio", blob);
+
+        try {
+            const res = await fetch("/transcribe", {
+                method: "POST",
+                body: formData
+            });
+            const result = await res.json();
+
+            if (result.transcript) {
+                console.log("📝 Transcript:", result.transcript);
+                transcriptEl.textContent = `📝 You said: "${result.transcript}"`;
+                askNextQuestion(result.transcript);
+            } else {
+                transcriptEl.textContent = "⚠️ Transcription failed.";
+            }
+        } catch (err) {
+            console.error("❌ Error transcribing audio:", err);
+            transcriptEl.textContent = "⚠️ Transcription error.";
+        }
+    };
+
+    mediaRecorder.start();
+    recordBtn.textContent = "⏹️ Stop Recording";
+    recordBtn.onclick = stopRecording;
+});
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        recordBtn.textContent = "🎙️ Record Response";
+        recordBtn.onclick = startRecording;
+    }
 }
 
 function startRecording() {
-  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-    mediaRecorder.start();
-    audioChunks = [];
+    recordBtn.click();  // re-trigger recording
+}
 
-    console.log("🎙️ Recording started...");
+// 🔁 Ask next question
+async function askNextQuestion(lastTranscript) {
+    try {
+        const res = await fetch("/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ last_response: lastTranscript })
+        });
 
-    mediaRecorder.ondataavailable = e => {
-      audioChunks.push(e.data);
-    };
+        const result = await res.json();
 
-    mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-      document.getElementById("playback").src = URL.createObjectURL(audioBlob);
+        if (result.done) {
+            questionEl.textContent = "✅ Interview complete!";
+            speakText("Thank you. The interview is complete.");
+            return;
+        }
 
-      const formData = new FormData();
-      formData.append("audio", audioBlob, "response.webm");
+        questionEl.textContent = "🤖 " + result.question;
+        speakText(result.question);
 
-      fetch("/transcribe", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => {
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        document.getElementById("transcript").innerText = data.transcript;
-        console.log("📝 Transcript:", data.transcript);
-      })
-      .catch(err => {
-        console.error("❌ Error during transcription:", err);
-        alert("Transcription failed. Check backend logs.");
-      });
-    };
+    } catch (err) {
+        console.error("❌ Error getting next question:", err);
+        questionEl.textContent = "⚠️ Failed to get question.";
+    }
+}
 
-    setTimeout(() => {
-      mediaRecorder.stop();
-      console.log("🛑 Recording stopped.");
-    }, 8000); // 8 seconds max
-  });
+// 🔊 Text-to-speech
+function speakText(text) {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "en-US";
+    utter.rate = 1.0;
+    synth.speak(utter);
 }

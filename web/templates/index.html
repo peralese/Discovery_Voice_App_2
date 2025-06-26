@@ -1,15 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Voice Interview Bot</title>
+    <meta charset="UTF-8">
+    <title>Discovery Interview Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            max-width: 600px;
+            margin: auto;
+            background: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        #question {
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        #transcript {
+            font-style: italic;
+            margin-top: 1rem;
+            color: #444;
+        }
+        #recordBtn {
+            display: block;
+            margin: 2rem auto;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #recordBtn:hover {
+            background: #0056b3;
+        }
+    </style>
 </head>
 <body>
-  <h1>🎙️ AI Interview</h1>
-  <div id="question-box">Click start to begin.</div>
-  <button onclick="startInterview()">Start</button>
-  <button onclick="startRecording()">🎤 Record</button>
-  <audio id="playback" controls></audio>
-  <p><strong>Transcript:</strong> <span id="transcript"></span></p>
-  <script src="/static/script.js"></script>
+    <h1>Discovery Interview Assistant</h1>
+
+    <div id="question">Loading first question...</div>
+    <div id="transcript"></div>
+
+    <button id="recordBtn">🎙️ Record Response</button>
+
+    <script src="/static/script.js"></script>
 </body>
 </html>
+
