@@ -1,13 +1,14 @@
 const recordBtn = document.getElementById("recordBtn");
 const questionEl = document.getElementById("question");
 const transcriptEl = document.getElementById("transcript");
+const statusEl = document.getElementById("status");
 
 let mediaRecorder;
 let audioChunks = [];
 
 // Load first question on page load
 window.onload = () => {
-    askNextQuestion("");  // triggers "What is your name?" if not asked yet
+    askNextQuestion("");  // triggers "What is your name?" if not yet asked
 };
 
 // 🎤 Start recording
@@ -18,9 +19,18 @@ recordBtn.addEventListener("click", async () => {
     }
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+    source.connect(analyser);
+    analyser.fftSize = 2048;
 
+    const bufferLength = analyser.fftSize;
+    const dataArray = new Uint8Array(bufferLength);
+
+    mediaRecorder = new MediaRecorder(stream);
     audioChunks = [];
+
     mediaRecorder.ondataavailable = event => {
         if (event.data.size > 0) {
             audioChunks.push(event.data);
@@ -28,6 +38,9 @@ recordBtn.addEventListener("click", async () => {
     };
 
     mediaRecorder.onstop = async () => {
+        audioContext.close();
+        updateStatus("🔄 Transcribing...");
+
         const blob = new Blob(audioChunks, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append("audio", blob);
@@ -42,19 +55,61 @@ recordBtn.addEventListener("click", async () => {
             if (result.transcript) {
                 console.log("📝 Transcript:", result.transcript);
                 transcriptEl.textContent = `📝 You said: "${result.transcript}"`;
+                updateStatus("✅ Response received.");
                 askNextQuestion(result.transcript);
             } else {
                 transcriptEl.textContent = "⚠️ Transcription failed.";
+                updateStatus("❌ Transcription failed.");
             }
         } catch (err) {
             console.error("❌ Error transcribing audio:", err);
             transcriptEl.textContent = "⚠️ Transcription error.";
+            updateStatus("❌ Transcription error.");
         }
     };
 
     mediaRecorder.start();
+    updateStatus("🎙️ Listening...");
     recordBtn.textContent = "⏹️ Stop Recording";
     recordBtn.onclick = stopRecording;
+
+    // 🔇 Silence detection
+    let silenceStart = null;
+    const silenceThreshold = 2.5; // seconds of silence before stopping
+    const checkInterval = 100;    // ms between checks
+
+    function detectSilence() {
+        analyser.getByteTimeDomainData(dataArray);
+
+        // Compute RMS (volume level)
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+            const normalized = (dataArray[i] - 128) / 128;
+            sum += normalized * normalized;
+        }
+        const rms = Math.sqrt(sum / bufferLength);
+
+        if (rms < 0.01) {
+            if (silenceStart === null) {
+                silenceStart = Date.now();
+            } else {
+                const elapsed = (Date.now() - silenceStart) / 1000;
+                if (elapsed >= silenceThreshold) {
+                    console.log("🤫 Silence detected — auto-stopping recording.");
+                    stopRecording();
+                    return;
+                }
+            }
+        } else {
+            silenceStart = null;
+        }
+
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            setTimeout(detectSilence, checkInterval);
+        }
+    }
+
+    detectSilence();
 });
 
 function stopRecording() {
@@ -71,6 +126,7 @@ function startRecording() {
 
 // 🔁 Ask next question
 async function askNextQuestion(lastTranscript) {
+    updateStatus("🧠 Thinking...");
     try {
         const res = await fetch("/ask", {
             method: "POST",
@@ -83,15 +139,18 @@ async function askNextQuestion(lastTranscript) {
         if (result.done) {
             questionEl.textContent = "✅ Interview complete!";
             speakText("Thank you. The interview is complete.");
+            updateStatus("🎉 Interview complete!");
             return;
         }
 
         questionEl.textContent = "🤖 " + result.question;
+        updateStatus("🔊 Speaking...");
         speakText(result.question);
 
     } catch (err) {
         console.error("❌ Error getting next question:", err);
         questionEl.textContent = "⚠️ Failed to get question.";
+        updateStatus("❌ Failed to get next question.");
     }
 }
 
@@ -104,4 +163,21 @@ function speakText(text) {
     utter.lang = "en-US";
     utter.rate = 1.0;
     synth.speak(utter);
+
+    utter.onend = () => {
+        updateStatus("");  // Clear status when speaking finishes
+    };
 }
+
+// 🛎️ Status helper
+function updateStatus(message) {
+    statusEl.textContent = message;
+    if (message) {
+        setTimeout(() => {
+            if (statusEl.textContent === message) {
+                statusEl.textContent = "";
+            }
+        }, 4000);
+    }
+}
+
