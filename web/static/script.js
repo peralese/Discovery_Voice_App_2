@@ -136,12 +136,23 @@ async function askNextQuestion(lastTranscript) {
 
         const result = await res.json();
 
+        // if (result.done) {
+        //     questionEl.textContent = "✅ Interview complete!";
+        //     speakText("Thank you. The interview is complete.");
+        //     updateStatus("🎉 Interview complete!");
+        //     return;
+        // }
         if (result.done) {
             questionEl.textContent = "✅ Interview complete!";
             speakText("Thank you. The interview is complete.");
             updateStatus("🎉 Interview complete!");
+
+            if (result.summary) {
+                showSummary(result.summary);
+            }
             return;
         }
+
 
         questionEl.textContent = "🤖 " + result.question;
         updateStatus("🔊 Speaking...");
@@ -181,3 +192,11 @@ function updateStatus(message) {
     }
 }
 
+function showSummary(summary) {
+    let summaryHtml = "<h3>📋 Interview Summary:</h3><ul>";
+    for (const [question, answer] of Object.entries(summary)) {
+        summaryHtml += `<li><strong>${question}:</strong> ${answer || "(No answer)"} </li>`;
+    }
+    summaryHtml += "</ul>";
+    document.getElementById("transcript").innerHTML = summaryHtml;
+}

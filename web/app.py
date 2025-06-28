@@ -102,8 +102,15 @@ def ask():
         answered = {k: v for k, v in context.items() if v}
         unanswered = [k for k, v in context.items() if not v]
 
+        # if not unanswered:
+        #     return jsonify({"done": True, "question": None})
         if not unanswered:
-            return jsonify({"done": True, "question": None})
+            return jsonify({
+                "done": True,
+                "question": None,
+                "summary": context
+            })
+
 
         prompt = f"""
 You are an AI interview assistant helping gather technical discovery information for a cloud migration project.
